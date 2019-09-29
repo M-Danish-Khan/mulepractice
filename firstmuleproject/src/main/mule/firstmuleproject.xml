@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ed84a895-32e8-42cb-bcbc-510f678d5dcf" >
+		<http:listener-connection host="0.0.0.0" port="8098" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="f12f841f-872f-4907-af94-e246f2c3dc8d">
+		<http:request-connection protocol="HTTPS" host="reqres.in" port="443" />
+	</http:request-config>
+	<flow name="firstmuleprojectFlow" doc:id="f0b3111c-9b33-4151-9b1a-5233379906dc" >
+		<http:listener doc:name="Listener" doc:id="91217df2-f669-4466-99ea-a518f7e664f4" config-ref="HTTP_Listener_config" path="/getUsers"/>
+		<logger level="INFO" doc:name="Logger" doc:id="b14bb183-6cb8-48a0-a15d-0d0e923b86c6" category="Request Recieved"/>
+		<flow-ref doc:name="Flow Reference" doc:id="352b91d9-73db-4a4e-a99b-a120db881e61" name="GetUserFlow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="631c579f-b8e5-4ed0-b6c1-7df6f6238287" message="Response Sent"/>
+	</flow>
+	<flow name="GetUserFlow" doc:id="b85f0004-197c-408d-8abf-08ca75ac8c59" >
+		<http:request method="GET" doc:name="Request" doc:id="57c04a00-53b5-4364-8b88-07a34b0149ca" config-ref="HTTP_Request_configuration" path="/api/users?page=2"/>
+		<ee:transform doc:name="Transform Message" doc:id="2753a672-014f-4662-8053-381a6caa38b0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data map ( datum , indexOfDatum ) -> {
+	id: datum.id,
+	email: datum.email,
+	first_name: datum.first_name,
+	last_name: datum.last_name,
+	avatar: datum.avatar
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-payload doc:name="Set Payload" doc:id="47c7d938-e6f9-4bc6-99da-1c2b2bcfac8b" value="#[payload]"/>
+	</flow>
+</mule>
