@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="684da844-dd7f-4443-9351-d3058f2cad4f" >
+		<http:listener-connection host="0.0.0.0" port="8089" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="b6fd6949-d244-4f1e-a2d9-a1111e3ec763" >
+		<http:request-connection protocol="HTTPS" host="reqres.in" port="443"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="49fe62a9-c42a-42ef-92d2-a713a654b30d" >
+		<http:request-connection protocol="HTTPS" host="reqres.in" port="443" />
+	</http:request-config>
+	<flow name="muleroutingprojectFlow" doc:id="6c014d14-f6a2-4f6e-994b-cac5a09393d7" >
+		<http:listener doc:name="Listener" doc:id="eff986d1-31f9-45dc-a808-6d571855fed7" config-ref="HTTP_Listener_config" path="/users/*"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d434a4c5-358e-40f0-bc80-5dee0d6b1e23" message="Request recieved.......  Identifying request type"/>
+		<flow-ref doc:name="Flow Reference" doc:id="975cc5d5-f594-45c7-bc08-32546f82e45a" name="IdentifyRequestType"/>
+		<logger level="INFO" doc:name="Logger" doc:id="34f8f2f4-ffeb-44c7-8442-71221aeccf01" message='#[%dw 2.0
+output application/json
+---
+{
+	message:"following response sent back",
+	"payload": payload
+}]'/>
+	</flow>
+	<flow name="IdentifyRequestType" doc:id="bbdb5e87-d668-47c2-b50c-68af1ca4f513" >
+		<choice doc:name="Choice" doc:id="b567f9eb-5bd2-4fc1-9793-75465a309626" >
+			<when doc:id="8beb132c-bd2c-42e1-97d2-85b3b414dc10" expression="#[attributes.requestPath == '/users/getUsers']">
+				<flow-ref doc:name="Flow Reference" doc:id="e9a8cc09-8555-4e37-b398-d39bffc1baea" name="get:\getUsers"/>
+			</when>
+			<when doc:id="252aaf08-b877-4ecd-9272-448047131309" expression="#[attributes.requestPath == '/users/getUser']">
+				<flow-ref doc:name="Flow Reference" doc:id="ad332802-8fcc-43b4-a3c5-276f99f459ff" name="get:\getUser"/>
+			</when>
+			<otherwise>
+				<set-payload doc:name="Set Payload" doc:id="596742b4-3a4c-44e0-ab8f-81cbb115adba" value='#[%dw 2.0
+output application/json
+---
+{
+	Error:"The url entered is not correct. Only these 2 URIs are registered. 1:- /getUsers  2:- /getUser"
+}]'/>
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="get:\getUsers" doc:id="82ea3579-4aae-4e09-a693-6dc2a1ee595e" >
+		<http:request method="GET" doc:name="Request" doc:id="db0854dc-a163-4dbd-b172-fb27dfb1fcea" config-ref="HTTP_Request_configuration1" path="/api/users?page=1" >
+		</http:request>
+				<ee:transform doc:name="Transform Message" doc:id="482d032e-b3e8-450e-81b6-b4d5904d3cc6" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data map ( datum , indexOfDatum ) -> {
+	id: datum.id,
+	email: datum.email,
+	first_name: datum.first_name,
+	last_name: datum.last_name,
+	avatar: datum.avatar
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</sub-flow>
+	<sub-flow name="get:\getUser" doc:id="b543814b-6bf6-4239-9a9e-9608106c6f5c" >
+		<http:request method="GET" doc:name="Request" doc:id="1fffac6d-1d97-425a-bd71-c3464c66d3ed" config-ref="HTTP_Request_configuration1" path='/api/users/1'>
+			
+		</http:request>
+				<ee:transform doc:name="Transform Message" doc:id="85668621-3c9a-4272-9afc-87c18a5c4d78" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	id: payload.data.id,
+	email: payload.data.email,
+	first_name: payload.data.first_name,
+	last_name: payload.data.last_name,
+	avatar: payload.data.avatar
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+	</sub-flow>
+</mule>

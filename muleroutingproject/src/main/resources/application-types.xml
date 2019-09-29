@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="allusers" format="json">
+      <types:shape format="weave" example="allusers_schema.json"><![CDATA[%dw 2.0
+
+type allusers = {|
+  page: Number {"typeId": "int"}, 
+  per_page: Number {"typeId": "int"}, 
+  total: Number {"typeId": "int"}, 
+  total_pages: Number {"typeId": "int"}, 
+  data: Array<{|    id: Number {"typeId": "int"},     email: String,     first_name: String,     last_name: String,     avatar: String  |}>
+|} {"example": "{\"page\":2,\"per_page\":6,\"total\":12,\"total_pages\":2,\"data\":[{\"id\":7,\"email\":\"michael.lawson@reqres.in\",\"first_name\":\"Michael\",\"last_name\":\"Lawson\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/follettkyle\/128.jpg\"},{\"id\":8,\"email\":\"lindsay.ferguson@reqres.in\",\"first_name\":\"Lindsay\",\"last_name\":\"Ferguson\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/araa3185\/128.jpg\"},{\"id\":9,\"email\":\"tobias.funke@reqres.in\",\"first_name\":\"Tobias\",\"last_name\":\"Funke\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/vivekprvr\/128.jpg\"},{\"id\":10,\"email\":\"byron.fields@reqres.in\",\"first_name\":\"Byron\",\"last_name\":\"Fields\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/russoedu\/128.jpg\"},{\"id\":11,\"email\":\"george.edwards@reqres.in\",\"first_name\":\"George\",\"last_name\":\"Edwards\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/mrmoiree\/128.jpg\"},{\"id\":12,\"email\":\"rachel.howell@reqres.in\",\"first_name\":\"Rachel\",\"last_name\":\"Howell\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/hebertialmeida\/128.jpg\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="proxyAllUsers" format="json">
+      <types:shape format="weave" example="alluserproxy_schema.json"><![CDATA[%dw 2.0
+
+type proxyAllUsers = Array<{|  id: Number {"typeId": "int"},   email: String,   first_name: String,   last_name: String,   avatar: String|}> {"example": "[{\"id\":2,\"email\":\"janet.weaver@reqres.in\",\"first_name\":\"Janet\",\"last_name\":\"Weaver\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/josephstein\/128.jpg\"}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="user" format="json">
+      <types:shape format="weave" example="user_schema.json"><![CDATA[%dw 2.0
+
+type user = {|
+  data: {|
+    id: Number {"typeId": "int"}, 
+    email: String, 
+    first_name: String, 
+    last_name: String, 
+    avatar: String
+  |}
+|} {"example": "{\"data\":{\"id\":2,\"email\":\"janet.weaver@reqres.in\",\"first_name\":\"Janet\",\"last_name\":\"Weaver\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/josephstein\/128.jpg\"}}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="proxyUser" format="json">
+      <types:shape format="weave" example="userproxy_schema.json"><![CDATA[%dw 2.0
+
+type proxyUser = {|
+  id: Number {"typeId": "int"}, 
+  email: String, 
+  first_name: String, 
+  last_name: String, 
+  avatar: String
+|} {"example": "{\"id\":2,\"email\":\"janet.weaver@reqres.in\",\"first_name\":\"Janet\",\"last_name\":\"Weaver\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/josephstein\/128.jpg\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="input_parameter" format="java">
+      <types:shape format="raml"><![CDATA[#%RAML 1.0 DataType
+type: string]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#4c6a768c-89b7-4d36-974a-0be1ce0e3cf3">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="allusers"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="proxyAllUsers"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#39e766b0-937d-46f0-b4a7-f8fba6872e7a">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="user"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="proxyUser"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#db0854dc-a163-4dbd-b172-fb27dfb1fcea">
+    <types:operation-declaration>
+      <types:inputs>
+        <types:parameter name="path" type="input_parameter"/>
+      </types:inputs>
+    </types:operation-declaration>
+  </types:enrichment>
+</types:mule>
