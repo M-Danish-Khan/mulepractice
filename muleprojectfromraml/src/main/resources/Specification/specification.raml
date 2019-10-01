@@ -1,0 +1,68 @@
+#%RAML 1.0
+title: DummyProjectFromApiSpecification
+
+traits:
+  client-required:
+    headers:
+      client_id:
+        type: string
+      client_token:
+        type: string
+types:
+  User: !include ../DataTypes/userDataType.raml
+  Users: !include ../DataTypes/allUsersDataType.raml
+
+/users:
+  is: [client-required]
+  get:
+    queryParameters:
+    responses:
+      200:
+        body:
+          application/json:
+            type: Users
+            examples:
+              output: !include ../Examples/AllUsersExample.raml
+
+  post:
+    body:
+      application/json:
+        type: User
+        example:
+          input: !include ../Examples/userexampleforpost.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              message: User added Successfully.......
+
+  /{ID}:
+    is: [client-required]
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type:
+              example:
+                output: !include ../Examples/userexample.raml
+    delete:
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                message: User deleted Successfully
+    put:
+      body:
+        application/json:
+          type:
+          examples:
+            input: !include ../Examples/userexample.raml
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                message: User Updated Successfully
