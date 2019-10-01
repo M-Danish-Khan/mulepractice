@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="users" format="json">
+      <types:shape format="weave" example="jsons/alluserproxy_schema.json"><![CDATA[%dw 2.0
+
+type users = Array<{|  id: Number {"typeId": "int"},   email: String,   first_name: String,   last_name: String,   avatar: String|}> {"example": "[{\"id\":2,\"email\":\"janet.weaver@reqres.in\",\"first_name\":\"Janet\",\"last_name\":\"Weaver\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/josephstein\/128.jpg\"}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="user" format="json">
+      <types:shape format="weave" example="jsons/userproxy_schema.json"><![CDATA[%dw 2.0
+
+type user = {|
+  id: Number {"typeId": "int"}, 
+  email: String, 
+  first_name: String, 
+  last_name: String, 
+  avatar: String
+|} {"example": "{\"id\":2,\"email\":\"janet.weaver@reqres.in\",\"first_name\":\"Janet\",\"last_name\":\"Weaver\",\"avatar\":\"https:\/\/s3.amazonaws.com\/uifaces\/faces\/twitter\/josephstein\/128.jpg\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#c9ae55db-6f0f-4a15-b962-ce7b1287cdd8">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="users"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#a6c58c4b-dce3-4b95-bcea-d3c4ea3ccc81">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="users"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

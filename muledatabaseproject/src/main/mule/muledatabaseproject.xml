@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3b09b6fb-21d6-481a-b524-896482ec9418" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7d0bc585-c752-468f-96c0-54a3fbed79e2" >
+		<http:request-connection protocol="HTTPS" />
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="9999ed9e-8b3c-4e4a-a692-c30945ec9c8f" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="mariadb" database="userapi" />
+	</db:config>
+	<flow name="muledatabaseprojectFlow" doc:id="0dbd2bc2-869d-4944-82e8-0737e72d7ff1" >
+		<http:listener doc:name="Listener" doc:id="a4dd5e7f-a358-4c66-a853-1731c43b323e" config-ref="HTTP_Listener_config" path="/users/*"/>
+		<logger level="INFO" doc:name="Logger" doc:id="b393f831-b83b-4108-a504-f251c96cb7d0" message="Request Recieved"/>
+		<choice doc:name="Choice" doc:id="f73ca589-5ba0-4564-9f53-8f9fbf584bf6" >
+			<when expression="#[attributes.requestPath == '/users/getUsers']">
+				<flow-ref doc:name="Flow Reference" doc:id="c54c6a18-d973-4bb6-b85e-013d77ad65e5" name="get:\getUsers"/>
+			</when>
+			<when expression="#[attributes.rawRequestPath == '/users/getUser']">
+				<flow-ref doc:name="Flow Reference" doc:id="c62acc0a-e267-4f09-996b-80365b31d2f0" name="get:\getUser\(userid)"/>
+			</when>
+			<when expression="#[attributes.method == 'POST']">
+				<flow-ref doc:name="Flow Reference" doc:id="a01cf5f1-9d1b-423e-87eb-81d31faa6ae9" name="post:\user"/>
+			</when>
+			<when expression="#[attributes.method == 'PUT']">
+				<flow-ref doc:name="Flow Reference" doc:id="267305f8-f8e0-4ab1-bd4a-33875e716240" name="put:\user"/>
+
+				
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="b7c4bd77-ba33-4013-b550-d2af4091fbdf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'status': 404,
+	'message': 'resource not found'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="get:\getUsers" doc:id="54a19686-08a0-42b8-91c2-845b5456bf87" >
+		<db:select doc:name="Select" doc:id="e9aab652-76ac-4474-85d7-feaca67f6752" config-ref="Database_Config">
+			<db:sql>SELECT * FROM user</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="c9ae55db-6f0f-4a15-b962-ce7b1287cdd8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	id: payload01.userid,
+	email: payload01.email default "",
+	first_name: payload01.first_name default "",
+	last_name: payload01.last_name default "",
+	avatar: payload01.image default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+
+	</sub-flow>
+	<sub-flow name="get:\getUser\(userid)" doc:id="a1cfb4bf-98d4-467e-92c4-7d3fab32c2f2" >
+		<db:select doc:name="Select" doc:id="47b5c693-6486-43f1-9cc0-415922ef1617" config-ref="Database_Config">
+			<db:sql>SELECT * FROM user WHERE userid=:userid</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	'userid': payload.userid
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="64ecdee0-3bad-4dd0-b9a8-0756ef213578" >
+			<when expression="#[payload.userid != null]">
+				<ee:transform doc:name="Transform Message" doc:id="a6c58c4b-dce3-4b95-bcea-d3c4ea3ccc81">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	id: payload01.userid,
+	email: payload01.email default "",
+	first_name: payload01.first_name default "",
+	last_name: payload01.last_name default "",
+	avatar: payload01.image default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="258ba5e8-c9f9-4c20-a0f5-b8d7aad46da6" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: 200,
+	'message': 'User Not found'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="post:\user" doc:id="04c7d2ce-07a2-4b5e-9fea-d5131f153a36" >
+		<choice doc:name="Choice" doc:id="ca00efab-fd60-419d-bafb-af639153b9f0" >
+			<when expression="#[(payload.email == null or payload.email == '') 
+and (payload.firstname == null or payload.firstname == '') 
+and (payload.lastname == null or payload.lastname == '' )
+and (payload.avatar == null or payload.avatar == '')]" doc:id="d28a57ca-1778-4ea9-a863-948baf4ff265">
+				<ee:transform doc:name="Transform Message" doc:id="0f358f52-a722-4696-8831-ed33992cab66">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'status': 204,
+	'message': 'Body is empty, Please send a valid user info'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<db:insert doc:name="Insert" doc:id="2a9431fd-0aec-4cb4-a357-9e1641ca40d6" config-ref="Database_Config">
+			<db:sql>INSERT INTO user (email,first_name,last_name,image) VALUES(:email, :firstname, :lastname, :image)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	 email: payload.email,
+	'firstname': payload.firstname,
+	'lastname': payload.lastname,
+	'image': payload.avatar
+}]]]></db:input-parameters>
+		</db:insert>
+				<ee:transform doc:name="Transform Message" doc:id="6c6b2f08-c2b5-4849-9e1d-7d2ad4ce288e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: 201,
+	'message': 'User added successfully'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="put:\user" doc:id="1719c7eb-a72a-4c23-bcdb-5c9d83e8e338" >
+		<choice doc:name="Choice" doc:id="cbf2f6cb-a56b-4dde-b732-65688acbda5d" >
+			<when expression="#[(payload.email == null or payload.email == '') 
+and (payload.firstname == null or payload.firstname == '') 
+and (payload.lastname == null or payload.lastname == '' )
+and (payload.avatar == null or payload.avatar == '')]">
+				<ee:transform doc:name="Transform Message" doc:id="2260d1c2-acaf-493d-875e-8d27ce95b965" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'status': 204,
+	'message': 'Body is empty, Please send a valid user info'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<db:update doc:name="Update" doc:id="06c9ed33-db55-43dc-a589-39a036668523" config-ref="Database_Config">
+			<db:sql>UPDATE user SET email=:email, first_name=:firstname, last_name=:lastname, image=:image Where userid=:userid</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	 userid: payload.userid,
+	 email: payload.email,
+	'firstname': payload.firstname,
+	'lastname': payload.lastname,
+	'image': payload.avatar
+}]]]></db:input-parameters>
+		</db:update>
+				<ee:transform doc:name="Transform Message" doc:id="32b65928-7f77-4b32-9799-c0184ea8d4a1">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: 201,
+	'message': 'User Updated successfully'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+
+	
+	
+</mule>
