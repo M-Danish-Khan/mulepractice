@@ -1,4 +1,6 @@
 #%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/d0c98701-f72d-4cf3-a6d2-ca39e32be633/ # 
+version: 1.00
 title: DummyProjectFromApiSpecification
 
 traits:
@@ -8,9 +10,10 @@ traits:
         type: string
       client_token:
         type: string
+
 types:
-  User: !include ../DataTypes/userDataType.raml
-  Users: !include ../DataTypes/allUsersDataType.raml
+  User: !include DataTypes/userDataType.raml
+  Users: !include DataTypes/allUsersDataType.raml
 
 /users:
   is: [client-required]
@@ -22,31 +25,31 @@ types:
           application/json:
             type: Users
             examples:
-              output: !include ../Examples/AllUsersExample.raml
-
+              !include Examples/AllUserExample.raml
+              
   post:
-    body:
+    body: 
       application/json:
         type: User
-        example:
-          input: !include ../Examples/userexampleforpost.raml
-    responses:
+        examples: 
+           !include Examples/userexampleforpost.raml
+    responses: 
       201:
-        body:
+        body: 
           application/json:
-            example:
+            example: 
               message: User added Successfully.......
-
+  
   /{ID}:
     is: [client-required]
     get:
-      responses:
+      responses: 
         200:
-          body:
+          body: 
             application/json:
-              type:
-              example:
-                output: !include ../Examples/userexample.raml
+              type: User
+              examples:
+                !include Examples/userexample.raml
     delete:
       responses:
         200:
@@ -57,12 +60,13 @@ types:
     put:
       body:
         application/json:
-          type:
-          examples:
-            input: !include ../Examples/userexample.raml
+          type: User
+          examples: 
+            !include Examples/userexample.raml
       responses:
         200:
           body:
             application/json:
               example:
                 message: User Updated Successfully
+
